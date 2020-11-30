@@ -4,13 +4,13 @@ import pprint
 
 def get_words(doc):
 	splitter=re.compile('\\W*')
-	print doc
+	# print doc
 	# words=[s.lower() for s in splitter.split(open(doc,"r").read()) if len(s) > 2 and len(s) < 20 ]
 	words=[s.lower() for s in splitter.split(doc) if len(s) > 2 and len(s) < 20 ]
 	
 	return dict([(w,1) for w in words])
 			
-print get_words("doc.txt")
+# print get_words("doc.txt")
 
 class Classifier:
 	def __init__(self, getfeatures,filename=None):
@@ -62,10 +62,54 @@ class Classifier:
 		
 		return pfcat / float(pcat)
 		
-	def weightedprob(f, cat, prf=self.fprob, weight=1, ap=0.5):
+	def weightedprob(self, f, cat, prf, weight=1, ap=0.5):
 		count = sum([self.fcount(f, ct) for ct in self.categories()])
 		return (weight*ap + count*prf(f,cat) ) / float(weight + count)
 
+class Naivebayes(Classifier):
+
+	def __init__(self, getfeatures):
+		Classifier.__init__(self, getfeatures)
+		self.thresholds = {}
+		
+	def setthreshold(self,cat,t):
+		self.thresholds[cat] = t
+		
+	def getthreshold(self, cat):
+		return self.thresholds.get(cat, 1.0)
+
+	def docprob(self, item, cat):
+		features = self.getfeatures(item)
+		
+		probs = [self.weightedprob(f, cat, self.fprob) for f in features]
+		
+		return reduce(lambda a, b: a * b, probs, 1)
+	
+	def prob(self, item, cat): #p(categoria | item)
+		catprob = float(self.catcount(cat)) / self.totalcount()
+		docprob = self.docprob(item, cat)
+		
+		return docprob * float(catprob)
+		
+	def classify(self, item, default=None):
+		probs = {}
+		max_p = 0
+		max_p2 = 0
+		max_c = ""
+		for cat in self.categories():
+			probs[cat] = self.prob(item,cat)
+			if probs[cat] > max_p:
+				max_p2 = max_p
+				max_p = probs[cat]
+				max_c = cat
+			elif probs[cat] > max_p2:
+				max_p2 = probs[cat]
+				
+		if max_p > self.getthreshold(max_c) * max_p2:
+			return max_c
+		else:
+			return default
+		
 def sampletrain(classifier):
 	docs = [
 		("Nobody owns the water", "good"),
@@ -79,12 +123,13 @@ def sampletrain(classifier):
 	]
 	for item, cat in docs:
 		classifier.train(item,cat)
+	
 
-c1 = Classifier(get_words)
+c1 = Naivebayes(get_words)
 sampletrain(c1)
 
-print c1.fcount("internet","good")
-print c1.fcount("nigerian","bad")
+c1.setthreshold("bad", 2.0)
+print c1.classify("consell water quick", "def")
 
 	
 

@@ -28,4 +28,18 @@ def get_closest_centroid(point, centroids):
 			
 		return closest_idx, closest_dist
 		
-fo
+def average_points(points_in_cl):
+	avgs = []
+	for i in range(len(points_in_cl[0])):
+		avgs.append(sum([p[i] for p in points_in_cl])/float(len(points))
+	return avgs
+
+def update_centroids(bestmatches):
+	for cluster_idx in len(bestmatches):
+		points = [data[i] for i in bestmatches[cluster_idx]]
+		if not points:
+			continue
+		avrg = average_points(points)
+		centroides[cluster_idx] = avgr
+		
+

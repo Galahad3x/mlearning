@@ -1,5 +1,7 @@
 from math import sqrt
+import dendrogram
 
+#Llegir el fitxer i retornar els noms dels blogs, els noms de les features i els numeros que apareixen
 def readfile(filename):
 	lines = [line for line in open(filename,"r")]
 	colnames = lines[0].strip().split('\t')[1:]
@@ -31,25 +33,28 @@ def pearson(v1, v2):
 	
 class bicluster:
 	def __init__(self, vec, left=None, right=None, dist=0.0, cid=None):
-	self.left = left
-	self.right = right
-	self.vec = vec
-	self.cid = cid
-	self.distance = distance
+		self.left = left
+		self.right = right
+		self.vec = vec
+		self.id = cid
+		self.distance = dist
 
 def hcluster(rows, distance=euclidean):
 	distances={}
 	currentclustid=-1
 	
+	# Crear un cluster per cada blog
 	clust = [bicluster(rows[i], cid=i) for i in range(len(rows))]
 	
+	# Mentre hi hagi més d'un cluster
 	while len(clust) > 1:
 		lowestpair = (0, 1)
 		closest = distance(clust[0].vec, clust[1].vec)
 		
+		# Buscar els 2 clusters més propers
 		for i in range(len(clust)):
 			for j in range(i + 1, len(clust)):
-				pair = (clust[i].cid, clust[j].cid)
+				pair = (clust[i].id, clust[j].id)
 				if pair not in distances:
 					distances[pair] = distance(clust[i].vec, clust[j].vec)
 					
@@ -57,6 +62,7 @@ def hcluster(rows, distance=euclidean):
 					closest = distances[pair]
 					lowestpair = (i, j)
 					
+		# Unir els 2 clusters més propers en un de sol
 		mergevec = [(clust[lowestpair[0]].vec[lowestpair[1]]+clust[j].vec[k])/2.0 for k in range(len(clust[i].vec))]
 		
 		newcluster = bicluster(mergevec, clust[lowestpair[0]], clust[lowestpair[1]], closest, currentclustid)
@@ -67,6 +73,8 @@ def hcluster(rows, distance=euclidean):
 		clust.append(newcluster)
 		
 	return clust[0]
-		
-		
-		
+	
+blognames, words, data = readfile("blogdata_full.txt")
+clst = hcluster(data)
+dendrogram.drawdendrogram(clst, "hola.jpg")
+

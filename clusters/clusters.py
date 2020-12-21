@@ -74,7 +74,15 @@ def hcluster(rows, distance=euclidean):
 		
 	return clust[0]
 	
+def rotate_matrix(matrix):
+	new_matrix = [[line[:] for line in matrix]]
+	for i, line in enumerate(matrix):
+		for j, elem in enumerate(line):
+			new_matrix[j][i] = matrix[i][j]
+	return new_matrix
+	
 blognames, words, data = readfile("blogdata_full.txt")
+rclst = hcluster(rotate_matrix(data))
 clst = hcluster(data)
-dendrogram.drawdendrogram(clst, "hola.jpg")
+dendrogram.drawdendrogram(rclst, "hola.jpg")
 
